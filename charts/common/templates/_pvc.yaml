@@ -15,12 +15,17 @@ metadata:
 spec:
   accessModes:
     - {{ .accessMode | default "ReadWriteOnce" }}
-  {{- if .storageClass }}
+{{- if .staticPvName }}
+  storageClassName: {{ "" | quote }}
+{{- else if .storageClass }}
   storageClassName: {{ .storageClass }}
-  {{- end }}
+{{- end }}
   resources:
     requests:
       storage: {{ .size | default "1Gi" }}
+  {{- if .staticPvName }}
+  volumeName: {{ .staticPvName }}
+  {{- end }}
 {{- end }}
 {{- end }}
 {{- end -}}

@@ -1,4 +1,4 @@
-suite: test deployment
+suite: test pvc
 templates:
   - pvc.yaml
 tests:
@@ -46,3 +46,14 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+  - it: Should generate storageClassName when assign staticPvName
+    set:
+      volumes:
+        - name: data
+          path: /var/lib/1clickinfra/data
+          size: 10Gi
+          staticPvName: test
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: ""
