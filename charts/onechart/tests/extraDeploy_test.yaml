@@ -1,4 +1,4 @@
-suite: test service
+suite: test extraDeploy
 templates:
   - extraDeploy.yaml
 tests:
