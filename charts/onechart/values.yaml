@@ -80,3 +80,10 @@ monitor:
 
 container: {}
 podSpec: {}
+
+# rbac:
+#   enabled: false
+#   serviceAccount:
+#     enabled: false
+#     annotations: {}
+#     additionalLabels: {}
