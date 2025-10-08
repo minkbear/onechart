@@ -1,0 +1,278 @@
+suite: test persistent volumes
+templates:
+  - pv.yaml
+tests:
+  - it: Should not create PV when persistentVolumes is not defined
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Should create CSI PV with basic configuration
+    set:
+      persistentVolumes:
+        - name: s3-pv
+          type: csi
+          volumeHandle: test-volume-handle
+          volumeAttributes:
+            bucketName: my-bucket
+    asserts:
+      - isKind:
+          of: PersistentVolume
+      - equal:
+          path: metadata.name
+          value: s3-pv
+      - equal:
+          path: spec.csi.driver
+          value: s3.csi.aws.com
+      - equal:
+          path: spec.csi.volumeHandle
+          value: test-volume-handle
+      - equal:
+          path: spec.csi.volumeAttributes.bucketName
+          value: my-bucket
+
+  - it: Should use default values for CSI PV
+    set:
+      persistentVolumes:
+        - name: s3-pv
+          type: csi
+          volumeHandle: test-handle
+          volumeAttributes:
+            bucketName: test-bucket
+    asserts:
+      - equal:
+          path: spec.capacity.storage
+          value: 1200Gi
+      - equal:
+          path: spec.accessModes[0]
+          value: ReadWriteMany
+      - equal:
+          path: spec.storageClassName
+          value: ""
+      - equal:
+          path: spec.csi.driver
+          value: s3.csi.aws.com
+
+  - it: Should override default capacity and accessMode
+    set:
+      persistentVolumes:
+        - name: s3-pv
+          type: csi
+          capacity: 500Gi
+          accessMode: ReadOnlyMany
+          volumeHandle: test-handle
+          volumeAttributes:
+            bucketName: test-bucket
+    asserts:
+      - equal:
+          path: spec.capacity.storage
+          value: 500Gi
+      - equal:
+          path: spec.accessModes[0]
+          value: ReadOnlyMany
+
+  - it: Should set custom CSI driver
+    set:
+      persistentVolumes:
+        - name: efs-pv
+          type: csi
+          driver: efs.csi.aws.com
+          volumeHandle: fs-12345678
+          volumeAttributes:
+            fileSystemId: fs-12345678
+    asserts:
+      - equal:
+          path: spec.csi.driver
+          value: efs.csi.aws.com
+
+  - it: Should set persistentVolumeReclaimPolicy
+    set:
+      persistentVolumes:
+        - name: s3-pv
+          type: csi
+          reclaimPolicy: Retain
+          volumeHandle: test-handle
+          volumeAttributes:
+            bucketName: test-bucket
+    asserts:
+      - equal:
+          path: spec.persistentVolumeReclaimPolicy
+          value: Retain
+
+  - it: Should not set reclaimPolicy when not specified
+    set:
+      persistentVolumes:
+        - name: s3-pv
+          type: csi
+          volumeHandle: test-handle
+          volumeAttributes:
+            bucketName: test-bucket
+    asserts:
+      - notExists:
+          path: spec.persistentVolumeReclaimPolicy
+
+  - it: Should set mountOptions
+    set:
+      persistentVolumes:
+        - name: s3-pv
+          type: csi
+          volumeHandle: test-handle
+          mountOptions:
+            - allow-delete
+            - region ap-southeast-1
+            - uid=1000
+            - gid=1000
+          volumeAttributes:
+            bucketName: test-bucket
+    asserts:
+      - equal:
+          path: spec.mountOptions
+          value:
+            - allow-delete
+            - region ap-southeast-1
+            - uid=1000
+            - gid=1000
+
+  - it: Should not set mountOptions when not specified
+    set:
+      persistentVolumes:
+        - name: s3-pv
+          type: csi
+          volumeHandle: test-handle
+          volumeAttributes:
+            bucketName: test-bucket
+    asserts:
+      - notExists:
+          path: spec.mountOptions
+
+  - it: Should set claimRef when specified
+    set:
+      persistentVolumes:
+        - name: s3-pv
+          type: csi
+          volumeHandle: test-handle
+          claimRef: data
+          volumeAttributes:
+            bucketName: test-bucket
+    asserts:
+      - equal:
+          path: spec.claimRef.namespace
+          value: NAMESPACE
+      - equal:
+          path: spec.claimRef.name
+          value: release-name-data
+
+  - it: Should not set claimRef when not specified
+    set:
+      persistentVolumes:
+        - name: s3-pv
+          type: csi
+          volumeHandle: test-handle
+          volumeAttributes:
+            bucketName: test-bucket
+    asserts:
+      - notExists:
+          path: spec.claimRef
+
+  - it: Should auto-generate volumeHandle when not specified
+    set:
+      persistentVolumes:
+        - name: s3-pv
+          type: csi
+          volumeAttributes:
+            bucketName: test-bucket
+    asserts:
+      - matchRegex:
+          path: spec.csi.volumeHandle
+          pattern: ^release-name-NAMESPACE-[a-z0-9]{8}-volume$
+
+  - it: Should create multiple PVs
+    set:
+      persistentVolumes:
+        - name: s3-pv-1
+          type: csi
+          volumeHandle: handle-1
+          volumeAttributes:
+            bucketName: bucket-1
+        - name: s3-pv-2
+          type: csi
+          volumeHandle: handle-2
+          volumeAttributes:
+            bucketName: bucket-2
+        - name: s3-pv-3
+          type: csi
+          volumeHandle: handle-3
+          volumeAttributes:
+            bucketName: bucket-3
+    asserts:
+      - hasDocuments:
+          count: 3
+
+  - it: Should set multiple volumeAttributes
+    set:
+      persistentVolumes:
+        - name: s3-pv
+          type: csi
+          volumeHandle: test-handle
+          volumeAttributes:
+            bucketName: my-bucket
+            prefix: data/uploads/
+            region: ap-southeast-1
+    asserts:
+      - equal:
+          path: spec.csi.volumeAttributes.bucketName
+          value: my-bucket
+      - equal:
+          path: spec.csi.volumeAttributes.prefix
+          value: data/uploads/
+      - equal:
+          path: spec.csi.volumeAttributes.region
+          value: ap-southeast-1
+
+  - it: Should create complete S3 CSI PV like extraDeploy example
+    set:
+      persistentVolumes:
+        - name: tni-mrm-test-s3-pv
+          type: csi
+          capacity: 100Gi
+          accessMode: ReadWriteMany
+          reclaimPolicy: Retain
+          volumeHandle: tni-mrm-test-s3-volume
+          mountOptions:
+            - allow-delete
+            - region ap-southeast-1
+            - prefix tni-mrm-test/temp-uploads/
+            - uid=1000
+            - gid=1000
+            - allow-other
+            - allow-overwrite
+          volumeAttributes:
+            bucketName: uindev
+    asserts:
+      - equal:
+          path: metadata.name
+          value: tni-mrm-test-s3-pv
+      - equal:
+          path: spec.capacity.storage
+          value: 100Gi
+      - equal:
+          path: spec.accessModes[0]
+          value: ReadWriteMany
+      - equal:
+          path: spec.persistentVolumeReclaimPolicy
+          value: Retain
+      - equal:
+          path: spec.storageClassName
+          value: ""
+      - equal:
+          path: spec.csi.driver
+          value: s3.csi.aws.com
+      - equal:
+          path: spec.csi.volumeHandle
+          value: tni-mrm-test-s3-volume
+      - equal:
+          path: spec.csi.volumeAttributes.bucketName
+          value: uindev
+      - equal:
+          path: spec.mountOptions[2]
+          value: prefix tni-mrm-test/temp-uploads/

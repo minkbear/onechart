@@ -99,4 +99,36 @@ podSpec: {}
 #         - /eks/uat/test-mr/secrets2
 #     smtp-secret:  # This will create: smtp-secret
 #       dataFrom:
-#         - /eks/shared/smtp/ap-southeasts-100
+#         - /eks/shared/smtp/ap-southeast-1
+
+# persistentVolumes:  # Static PV provisioning for CSI drivers (S3, EFS), NFS, hostPath
+#   - name: s3-pv  # PV name (required, must be unique)
+#     type: csi  # Type: csi | nfs | hostPath (required)
+#     driver: s3.csi.aws.com  # CSI driver (default: s3.csi.aws.com for type=csi)
+#     capacity: 1200Gi  # Storage capacity (default: 1200Gi, nominal for S3)
+#     accessMode: ReadWriteMany  # Access mode (default: ReadWriteMany, options: ReadWriteMany | ReadOnlyMany | ReadWriteOnce)
+#     reclaimPolicy: Retain  # Reclaim policy (optional, options: Retain | Delete | Recycle)
+#     volumeHandle: s3-csi-driver-volume  # Unique volume identifier (optional, auto-generated: {release-name}-{namespace}-{random8}-volume)
+#     claimRef: data  # PVC name to bind (optional, will be prefixed with release name)
+#     mountOptions:  # Mount options (optional, default: none)
+#       - allow-delete
+#       - region ap-southeast-100
+#       - prefix test-mr-uat/temp-uploads/
+#       - uid=1000
+#       - gid=1000
+#       - allow-other
+#       - allow-overwrite
+#     volumeAttributes:  # CSI volume attributes (optional for type=csi, default: none)
+#       bucketName: my-s3-bucket
+#   - name: s3-pv-2
+#     type: csi
+#     driver: s3.csi.aws.com  # default: s3.csi.aws.com
+#     capacity: 1200Gi  # default: 1200Gi
+#     accessMode: ReadWriteMany  # default: ReadWriteMany
+#     volumeHandle: s3-csi-driver-volume-2  # required, must be unique
+#     claimRef: data-2  # optional
+#     mountOptions:  # optional
+#       - allow-delete
+#       - region ap-southeast-100
+#     volumeAttributes:  # optional
+#       bucketName: my-s3-bucket-2

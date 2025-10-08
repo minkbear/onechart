@@ -1,0 +1,46 @@
+{{- if .Values.persistentVolumes }}
+{{- range .Values.persistentVolumes }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .name }}
+spec:
+  capacity:
+    storage: {{ .capacity | default "1200Gi" }}
+  accessModes:
+    - {{ .accessMode | default "ReadWriteMany" }}
+  {{- if .reclaimPolicy }}
+  persistentVolumeReclaimPolicy: {{ .reclaimPolicy }}
+  {{- end }}
+  storageClassName: ""
+  {{- if .claimRef }}
+  claimRef:
+    namespace: {{ $.Release.Namespace }}
+    name: {{ printf "%s-%s" (include "robustName" $.Release.Name) .claimRef }}
+  {{- end }}
+  {{- with .mountOptions }}
+  mountOptions:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if eq .type "csi" }}
+  csi:
+    driver: {{ .driver | default "s3.csi.aws.com" }}
+    volumeHandle: {{ .volumeHandle | default (printf "%s-%s-%s-volume" (include "robustName" $.Release.Name) $.Release.Namespace (randAlphaNum 8 | lower)) }}
+    {{- with .volumeAttributes }}
+    volumeAttributes:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  {{- else if eq .type "nfs" }}
+  nfs:
+    server: {{ .nfs.server | required "nfs.server is required for NFS volumes" }}
+    path: {{ .nfs.path | required "nfs.path is required for NFS volumes" }}
+  {{- else if eq .type "hostPath" }}
+  hostPath:
+    path: {{ .hostPath.path | required "hostPath.path is required for hostPath volumes" }}
+    {{- with .hostPath.type }}
+    type: {{ . }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
