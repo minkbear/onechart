@@ -82,8 +82,21 @@ container: {}
 podSpec: {}
 
 # rbac:
-#   enabled: false
 #   serviceAccount:
 #     enabled: false
 #     annotations: {}
 #     additionalLabels: {}
+
+# externalSecret:
+#   refreshInterval: "1h"
+#   secretStore:
+#     name: test-secret-store
+#     kind: ClusterSecretStore
+#   files:
+#     test-mr-secret:  # This will create: test-mr-secret
+#       dataFrom:
+#         - /eks/uat/test-mr/secrets
+#         - /eks/uat/test-mr/secrets2
+#     smtp-secret:  # This will create: smtp-secret
+#       dataFrom:
+#         - /eks/shared/smtp/ap-southeasts-100
