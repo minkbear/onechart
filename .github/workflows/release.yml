@@ -68,20 +68,13 @@ jobs:
       with:
         title: Release ${{ github.ref }}
 
-    - name: Publishing to the Helm repository
+    - name: Package Helm charts
       run: |
-        git config --global user.email "action@github.com"
-        git config --global user.name "Github Action"
-        git checkout master
         make package
-        git add .
-        git commit -m "Publishing $TAG_VERSION to the Helm repository"
-        git push origin master
       env:
         TAG_VERSION: ${{ steps.versioning.outputs.tag_version }}
-        title: Release ${{ github.ref }}
 
-    - name: Publish to to GHCR
+    - name: Publish to GHCR
       run: |
         echo ${{ secrets.HELM_TOKEN }} | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
         helm push docs/onechart-${CHART_VERSION}.tgz  oci://ghcr.io/minkbear
@@ -90,6 +83,7 @@ jobs:
       env:
         CHART_VERSION: ${{ steps.chart_version.outputs.chart_version }}
         STATIC_SITE_CHART_VERSION: ${{ steps.chart_version.outputs.static_site_chart_version }}
+
     - name: Preparing the next release version
       run: |
         git config --global user.email "action@github.com"
