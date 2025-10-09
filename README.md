@@ -7,63 +7,83 @@ Because no-one can remember the Kubernetes yaml syntax.
 https://gimlet.io/docs/reference/onechart-reference
 
 
-## Getting started
+## Quick Start
 
-OneChart is a generic Helm Chart for web applications. The idea is that most Kubernetes manifest look alike, only very few parts actually change.
+### Installation
 
-Add the Onechart Helm repository:
+Add the Helm repository:
 
 ```bash
-helm repo add onechart https://chart.onechart.dev
+helm repo add onechart https://minkbear.github.io/onechart
+helm repo update
 ```
 
-Set your image name and version, the boilerplate is generated.
+### Basic Usage
 
 ```bash
-helm template my-release onechart/onechart \
+# Install with simple configuration
+helm install my-app onechart/onechart \
   --set image.repository=nginx \
-  --set image.tag=1.19.3
+  --set image.tag=1.21
+
+# Or use a values file
+helm install my-app onechart/onechart -f values.yaml
 ```
 
-The example below deploys your application image, sets environment variables and configures the Kubernetes Ingress domain name:
+### Example values.yaml
 
-```bash
-helm repo add onechart https://chart.onechart.dev
-helm template my-release onechart/onechart -f values.yaml
-
-# values.yaml
+```yaml
 image:
   repository: my-app
-  tag: fd803fc
-vars:
-  VAR_1: "value 1"
-  VAR_2: "value 2"
+  tag: v1.0.0
+
+replicas: 2
+
 ingress:
-  annotations:
-    kubernetes.io/ingress.class: nginx
-  host: my-app.mycompany.com
+  enabled: true
+  host: my-app.example.com
+  ingressClassName: nginx
+
+vars:
+  ENV: production
+  DATABASE_URL: postgres://...
 ```
 
-### Alternative: using an OCI repository
-You can also template and install onechart from an OCI repository as follows:
+## Installation Methods
 
-Check the generated Kubernetes yaml:
+OneChart is available through multiple channels:
 
+### 📦 GitHub Pages (Recommended)
 ```bash
-helm template my-release oci://ghcr.io/gimlet-io/onechart --version 0.62.0 \
-  --set image.repository=nginx \
-  --set image.tag=1.19.3
+helm repo add onechart https://minkbear.github.io/onechart
+helm install my-app onechart/onechart --version 0.74.0
 ```
 
-Deploy with Helm:
-
+### 🐳 OCI Registry (GitHub Container Registry)
 ```bash
-helm install my-release oci://ghcr.io/gimlet-io/onechart --version 0.62.0 \
-  --set image.repository=nginx \
-  --set image.tag=1.19.3
+helm install my-app oci://ghcr.io/minkbear/onechart --version 0.74.0
 ```
 
-See all [Examples](/website/docs/examples/)
+### 📚 Available Charts
+- **onechart** - Web applications and APIs
+- **cron-job** - Scheduled job workloads
+- **static-site** - Static website hosting
+
+For detailed installation instructions, see [INSTALLATION.md](INSTALLATION.md).
+
+## Features
+
+- ✅ Production-ready Kubernetes deployments
+- ✅ Service Account & RBAC support
+- ✅ External Secrets integration (AWS, GCP, Azure, Vault)
+- ✅ Persistent Volume management
+- ✅ Ingress with TLS support
+- ✅ Auto-scaling (HPA)
+- ✅ Pod Disruption Budgets
+- ✅ Prometheus monitoring integration
+- ✅ And much more!
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## Contribution Guidelines
 
@@ -98,10 +118,8 @@ The tests are located under `charts/onechart/test` and use the https://github.co
 
 For installation, refer to the CI workflow at `.github/workflows/build.yaml`.
 
-## Release process
+## For Maintainers
 
-`make all` to test and package the Helm chart.
-The chart archives are put under `docs/` together with the Helm repository manifest (index.yaml)
-It is then served with Github Pages on https://chart.onechart.dev
-
-Github Actions is used to automate the make calls on git tag events.
+- **Release Process**: See [RELEASE.md](RELEASE.md)
+- **Development Guide**: See [CLAUDE.md](CLAUDE.md)
+- **Changelog**: See [CHANGELOG.md](CHANGELOG.md)
